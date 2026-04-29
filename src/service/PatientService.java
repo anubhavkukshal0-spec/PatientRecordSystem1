@@ -64,4 +64,55 @@ public class PatientService{
             return false;
         }
     }
-  
+
+    public boolean addPatient(String name, int age, String gender, String phone, String disease) {
+        return addPatient(null, name, age, gender, phone, disease);
+    }
+
+    public boolean deletePatientById(int id) {
+        if (id <= 0) {
+            return false;
+        }
+
+        String[] candidateColumns = {"id", "patient_id", "pid"};
+        for (String column : candidateColumns) {
+            String query = "DELETE FROM Patient WHERE " + column + " = ?";
+            try (Connection con = DBConnection.getConnection();
+                 PreparedStatement ps = con.prepareStatement(query)) {
+                ps.setInt(1, id);
+                return ps.executeUpdate() > 0;
+            } catch (SQLException e) {
+                // Try next candidate key column when schema differs.
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        // Collapse repeated spaces so text is stored and displayed consistently.
+        return value.trim().replaceAll("\\s+", " ");
+    }
+
+    private String resolveIdColumn(Connection con) {
+        String[] candidates = {"id", "patient_id", "pid"};
+        try (PreparedStatement ps = con.prepareStatement("SHOW COLUMNS FROM Patient");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String column = rs.getString("Field");
+                for (String candidate : candidates) {
+                    if (candidate.equalsIgnoreCase(column)) {
+                        return column;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "id";
+    }
+}  
