@@ -93,3 +93,76 @@ public class ViewPatients extends JFrame {
             query += " WHERE name LIKE ? OR phone LIKE ? OR disease LIKE ?";
         }
         query += " ORDER BY patient_id DESC";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
+            if (hasKeyword) {
+                String likeValue = "%" + keyword + "%";
+                ps.setString(1, likeValue);
+                ps.setString(2, likeValue);
+                ps.setString(3, likeValue);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while(rs.next()) {
+                    model.addRow(new Object[]{
+                        rs.getInt("patient_id"),
+                        rs.getString("name"),
+                        rs.getInt("age"),
+                        rs.getString("gender"),
+                        rs.getString("phone"),
+                        rs.getString("disease")
+                    });
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Unable to load patients.\n" + e.getMessage());
+        }
+    }
+
+    private void deleteSelectedPatient() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a patient to delete.");
+            return;
+        }
+
+        int patientId = (int) model.getValueAt(selectedRow, 0);
+        String patientName = String.valueOf(model.getValueAt(selectedRow, 1));
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Delete patient: " + patientName + " (ID " + patientId + ")?",
+                "Confirm Deletion",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            boolean deleted = patientService.deletePatientById(patientId);
+            if (deleted) {
+                JOptionPane.showMessageDialog(this, "Patient deleted successfully.");
+                loadPatients(searchField.getText().trim());
+            } else {
+                JOptionPane.showMessageDialog(this, "Could not delete the patient.");
+            }
+        }
+    }
+
+    private String resolveIdColumnName() {
+        String[] candidateColumns = {"id", "patient_id", "pid"};
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("SHOW COLUMNS FROM Patient");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String column = rs.getString("Field");
+                for (String candidate : candidateColumns) {
+                    if (candidate.equalsIgnoreCase(column)) {
+                        return column;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Fall back to the most common key name when metadata is unavailable.
+        }
+        return "id";
+    }
+}
