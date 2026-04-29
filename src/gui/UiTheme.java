@@ -63,3 +63,42 @@ public class UiTheme {
             new EmptyBorder(6, 8, 6, 8)
         ));
     }
+
+    public static void styleTable(JTable table) {
+        table.setFont(INPUT_FONT);
+        table.setRowHeight(30);
+        table.getTableHeader().setFont(LABEL_FONT);
+        table.getTableHeader().setBackground(SURFACE);
+        table.getTableHeader().setForeground(MUTED);
+        table.setSelectionBackground(new Color(239, 246, 255));
+        table.setSelectionForeground(TEXT);
+        table.setGridColor(BORDER);
+    }
+
+    public static JButton primaryButton(String text) {
+        JButton btn = new JButton(text);
+        styleButton(btn, PRIMARY, Color.WHITE);
+        return btn;
+    }
+
+    public static JButton secondaryButton(String text) {
+        JButton btn = new JButton(text);
+        styleButton(btn, new Color(238, 242, 255), new Color(30, 64, 175));
+        return btn;
+    }
+
+    public static JButton dangerButton(String text) {
+        JButton btn = new JButton(text);
+        styleButton(btn, DANGER, Color.WHITE);
+        return btn;
+    }
+
+    private static void styleButton(JButton btn, Color bg, Color fg) {
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBackground(bg);
+        btn.setForeground(fg);
+        btn.setFocusPainted(false);
+        btn.setBorder(new EmptyBorder(10, 16, 10, 16));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }
+}
